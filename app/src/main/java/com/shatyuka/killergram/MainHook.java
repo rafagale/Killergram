@@ -1,6 +1,5 @@
 package com.shatyuka.killergram;
 
-import java.util.Arrays;
 import java.util.List;
 
 import de.robv.android.xposed.IXposedHookLoadPackage;
@@ -10,7 +9,7 @@ import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 
 public class MainHook implements IXposedHookLoadPackage {
-    public final static List<String> hookPackages = Arrays.asList(
+    public static final List<String> hookPackages = List.of(
             "org.telegram.messenger",
             "org.telegram.messenger.web",
             "org.telegram.messenger.beta",
@@ -25,7 +24,8 @@ public class MainHook implements IXposedHookLoadPackage {
             "org.aka.messenger",
             "ellipi.messenger",
             "org.nift4.catox",
-            "it.owlgram.android");
+            "it.owlgram.android",
+            "tw.nekomimi.nekogram");
 
     @Override
     public void handleLoadPackage(final XC_LoadPackage.LoadPackageParam lpparam) {
@@ -35,21 +35,24 @@ public class MainHook implements IXposedHookLoadPackage {
                 if (messagesControllerClass != null) {
                     XposedBridge.hookAllMethods(messagesControllerClass, "getSponsoredMessages", XC_MethodReplacement.returnConstant(null));
                     XposedBridge.hookAllMethods(messagesControllerClass, "isChatNoForwards", XC_MethodReplacement.returnConstant(false));
+                    XposedBridge.log("Hooked all methods from " + messagesControllerClass.getName());
                 }
                 Class<?> chatUIActivityClass = XposedHelpers.findClassIfExists("org.telegram.ui.ChatActivity", lpparam.classLoader);
                 if (chatUIActivityClass != null) {
                     XposedBridge.hookAllMethods(chatUIActivityClass, "addSponsoredMessages", XC_MethodReplacement.returnConstant(null));
+                    XposedBridge.log("Hooked all methods from " + chatUIActivityClass.getName());
                 }
-                Class<?> SharedConfigClass = XposedHelpers.findClassIfExists("org.telegram.messenger.SharedConfig", lpparam.classLoader);
-                if (SharedConfigClass != null) {
-                    XposedBridge.hookAllMethods(SharedConfigClass, "getDevicePerformanceClass", XC_MethodReplacement.returnConstant(2));
+                Class<?> sharedConfigClass = XposedHelpers.findClassIfExists("org.telegram.messenger.SharedConfig", lpparam.classLoader);
+                if (sharedConfigClass != null) {
+                    XposedBridge.hookAllMethods(sharedConfigClass, "getDevicePerformanceClass", XC_MethodReplacement.returnConstant(2));
                 }
-                Class<?> UserConfigClass = XposedHelpers.findClassIfExists("org.telegram.messenger.UserConfig", lpparam.classLoader);
-                if (UserConfigClass != null) {
-                    XposedBridge.hookAllMethods(UserConfigClass, "getMaxAccountCount", XC_MethodReplacement.returnConstant(999));
-                    XposedBridge.hookAllMethods(UserConfigClass, "hasPremiumOnAccounts", XC_MethodReplacement.returnConstant(true));
+                Class<?> userConfigClass = XposedHelpers.findClassIfExists("org.telegram.messenger.UserConfig", lpparam.classLoader);
+                if (userConfigClass != null) {
+                    XposedBridge.hookAllMethods(userConfigClass, "getMaxAccountCount", XC_MethodReplacement.returnConstant(999));
+                    XposedBridge.hookAllMethods(userConfigClass, "hasPremiumOnAccounts", XC_MethodReplacement.returnConstant(true));
                 }
-            } catch (Throwable ignored) {
+            } catch (Exception ex) {
+                XposedBridge.log("Unexpected error" + ex.getMessage());
             }
         }
     }
